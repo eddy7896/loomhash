@@ -21,7 +21,7 @@ FastAPI + Uvicorn (behind Caddy) service that receives numerical biometric input
 Routes, request/response contracts, and error semantics were approved 2026-09-17; see [../open-decisions.md](../open-decisions.md). Implemented in [../../loomhash/api/](../../loomhash/api/):
 
 - `schemas.py` — `EnrollRequest`/`AuthenticateRequest` (both `extra="forbid"`, fixed 128-length `vector` field) and their response models.
-- `app.py` — `create_app(storage=None)`: `POST /v1/enroll`, `POST /v1/authenticate`, `DELETE /v1/users/{user_id}`. Defaults to `InMemoryStorageBackend` (non-durable) when no storage backend is passed in.
+- `app.py` — `create_app(storage=None)`: `POST /v1/enroll`, `POST /v1/authenticate`, `DELETE /v1/users/{user_id}`. Defaults to `InMemoryStorageBackend` (non-durable) when no storage backend is passed in. `DELETE /v1/users/{user_id}` calls `loomhash.compliance.revoke()`, not `storage.delete()` directly — see [compliance.md](compliance.md). Do not "simplify" this back to a direct storage call; that was the exact boundary blur the Compliance module was built to fix.
 - `__main__.py` — `python -m loomhash.api` for local manual smoke-testing only (in-memory storage, resets on restart).
 
 End-to-end tested (real HTTP requests through the ASGI app via `TestClient`, in-memory storage) in [../../tests/test_api/test_routes.py](../../tests/test_api/test_routes.py): full enroll -> authenticate -> revoke loop, upsert-on-re-enroll invalidating the old vector, unknown-user 401, wrong-length-vector 422, and unexpected-field 422.

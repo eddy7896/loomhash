@@ -15,12 +15,19 @@ An unknown/never-enrolled user_id gets the same 401 as a failed face
 match on /v1/authenticate, by explicit decision (2026-09-17) -- returning
 a distinct code (e.g. 404) would let a caller enumerate which user_ids
 are enrolled.
+
+DELETE /v1/users/{user_id} delegates to loomhash.compliance.revoke()
+rather than calling storage.delete() directly -- revocation-event
+authorization is the Compliance module's job, not this route's (see
+docs/agents/compliance.md).
 """
 
 from __future__ import annotations
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 
+from loomhash.compliance import RevocationDenied
+from loomhash.compliance import revoke as process_revocation
 from loomhash.cryptography import (
     LSH_VERSION,
     generate_seed,
@@ -92,10 +99,17 @@ def create_app(storage: StorageBackend | None = None) -> FastAPI:
     @app.delete(
         "/v1/users/{user_id}",
         response_model=RevokeResponse,
-        responses={500: {"description": "Revocation could not be confirmed in every store"}},
+        responses={
+            403: {"description": "Revocation not authorized"},
+            500: {"description": "Revocation could not be confirmed in every store"},
+        },
     )
     def revoke(user_id: str, storage: StorageBackend = Depends(get_storage)) -> RevokeResponse:
-        if not storage.delete(user_id):
+        try:
+            deleted = process_revocation(storage, user_id)
+        except RevocationDenied as exc:
+            raise HTTPException(status_code=403, detail=str(exc)) from exc
+        if not deleted:
             raise HTTPException(status_code=500, detail="revocation incomplete, retry")
         return RevokeResponse(user_id=user_id)
 

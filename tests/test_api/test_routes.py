@@ -5,14 +5,28 @@ loop through real HTTP requests (via FastAPI's TestClient).
 """
 
 import unittest
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
 from loomhash.api import create_app
-from loomhash.storage import InMemoryStorageBackend
+from loomhash.storage import EnrollmentRecord, InMemoryStorageBackend, StorageBackend
 
 VECTOR_A = [1.0] * 128
 VECTOR_B = [-1.0] * 128  # negation flips virtually every LSH bit, see test_lsh.py
+
+
+class AlwaysFailsToDeleteBackend(StorageBackend):
+    """See tests/test_compliance/test_revocation.py for why this exists."""
+
+    def enroll(self, record: EnrollmentRecord) -> None:
+        pass
+
+    def get(self, user_id: str):
+        return None
+
+    def delete(self, user_id: str) -> bool:
+        return False
 
 
 class TestApiRoutes(unittest.TestCase):
@@ -57,6 +71,17 @@ class TestApiRoutes(unittest.TestCase):
     def test_revoke_unknown_user_is_idempotent(self):
         resp = self.client.delete("/v1/users/nobody")
         self.assertEqual(resp.status_code, 200)
+
+    def test_revoke_returns_403_when_not_authorized(self):
+        self.client.post("/v1/enroll", json={"user_id": "alice", "vector": VECTOR_A})
+        with patch("loomhash.compliance.revocation.is_authorized", return_value=False):
+            resp = self.client.delete("/v1/users/alice")
+        self.assertEqual(resp.status_code, 403)
+
+    def test_revoke_returns_500_when_storage_reports_incomplete_deletion(self):
+        client = TestClient(create_app(AlwaysFailsToDeleteBackend()))
+        resp = client.delete("/v1/users/alice")
+        self.assertEqual(resp.status_code, 500)
 
     def test_enroll_rejects_wrong_length_vector(self):
         resp = self.client.post("/v1/enroll", json={"user_id": "alice", "vector": [1.0] * 127})

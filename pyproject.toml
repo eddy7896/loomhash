@@ -1,0 +1,10 @@
+[project]
+name = "loomhash"
+version = "0.0.0"
+description = "Self-hosted zero-knowledge biometric microservice (feasibility prototype). See system.md and docs/."
+requires-python = ">=3.10"
+
+# requires-python enforces system.md constraint 2 (int.bit_count() availability).
+# No dependencies are declared here: none have been approved yet per the
+# "Ask, Do Not Assume" rule in system.md section 1. Add dependencies only with
+# explicit user consent, then list them here.

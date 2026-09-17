@@ -1,0 +1,21 @@
+name: Guardrails
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  constraint-and-doc-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Constraint scan (system.md section 2)
+        run: python scripts/check_constraints.py
+
+      - name: Doc-consistency check (docs/memory-system.md)
+        run: python scripts/check_docs.py

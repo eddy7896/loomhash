@@ -1,0 +1,33 @@
+#!/bin/sh
+# Tracked pre-commit guardrail for LoomHash. Installed into .git/hooks/pre-commit
+# as a shim (see .git/hooks/pre-commit or run `git config core.hooksPath hooks`
+# yourself if you prefer git to call this file directly).
+#
+# Blocks a commit on hard constraint violations (system.md section 2) or
+# doc-consistency errors (docs/memory-system.md). See docs/hallucination-checks.md.
+
+set -e
+
+PYTHON=python
+if ! command -v python >/dev/null 2>&1; then
+    PYTHON=python3
+fi
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+echo "Running LoomHash guardrail checks..."
+
+"$PYTHON" scripts/check_constraints.py
+constraints_status=$?
+
+"$PYTHON" scripts/check_docs.py
+docs_status=$?
+
+if [ "$constraints_status" -ne 0 ] || [ "$docs_status" -ne 0 ]; then
+    echo ""
+    echo "Commit blocked: guardrail check failed. See docs/hallucination-checks.md."
+    exit 1
+fi
+
+exit 0

@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# Node (edge client, once it exists)
+node_modules/
+.next/
+
+# Env / secrets
+.env
+.env.*
+*.pem
+*.key
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors / tools
+.vscode/
+.idea/
+.kilo/

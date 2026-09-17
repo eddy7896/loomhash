@@ -7,7 +7,14 @@ needs the consented evaluation protocol in docs/open-decisions.md.
 
 import unittest
 
-from loomhash.cryptography import HASH_BITS, VECTOR_DIM, generate_seed, project
+from loomhash.cryptography import (
+    HASH_BITS,
+    VECTOR_DIM,
+    generate_seed,
+    hash_from_bytes,
+    hash_to_bytes,
+    project,
+)
 
 
 class TestGenerateSeed(unittest.TestCase):
@@ -57,6 +64,20 @@ class TestProject(unittest.TestCase):
     def test_rejects_wrong_length_vector(self):
         with self.assertRaises(ValueError):
             project(self.vector[:-1], self.seed_a)
+
+
+class TestHashBytesRoundTrip(unittest.TestCase):
+    def test_round_trips(self):
+        h = project([float(i) for i in range(VECTOR_DIM)], bytes(range(32)))
+        self.assertEqual(hash_from_bytes(hash_to_bytes(h)), h)
+
+    def test_bytes_length_is_32(self):
+        h = project([float(i) for i in range(VECTOR_DIM)], bytes(range(32)))
+        self.assertEqual(len(hash_to_bytes(h)), HASH_BITS // 8)
+
+    def test_rejects_wrong_length_bytes(self):
+        with self.assertRaises(ValueError):
+            hash_from_bytes(b"too-short")
 
 
 if __name__ == "__main__":

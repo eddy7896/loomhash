@@ -9,13 +9,17 @@ description = "Self-hosted zero-knowledge biometric microservice (feasibility pr
 requires-python = ">=3.10"
 dependencies = [
     "numpy>=1.24",
+    "psycopg[binary]>=3.1",
+    "redis>=5.0",
 ]
 
 # requires-python enforces system.md constraint 2 (int.bit_count() availability).
-# numpy is the only dependency: system.md section 3 already specifies it
-# ("Native Python numpy for seeded LSH projection"). No other dependency is
-# approved yet per the "Ask, Do Not Assume" rule in system.md section 1 --
-# add further dependencies only with explicit user consent, then list them here.
+# numpy is spec-mandated (system.md section 3: "Native Python numpy for seeded
+# LSH projection"). psycopg and redis were approved explicitly by the user on
+# 2026-09-17 for the storage module's PostgreSQL/Redis adapters (see
+# STATUS.md and docs/open-decisions.md D-10) -- neither has been tested
+# against a live PostgreSQL/Redis instance in this environment yet. No other
+# dependency is approved; add further ones only with explicit user consent.
 
 [tool.setuptools.packages.find]
 include = ["loomhash*"]

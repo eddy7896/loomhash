@@ -56,3 +56,19 @@ def project(vector, seed: bytes) -> int:
     for value in projected:
         hash_int = (hash_int << 1) | int(value >= 0)
     return hash_int
+
+
+def hash_to_bytes(loom_hash: int) -> bytes:
+    """Serialize a loom_hash int as HASH_BITS/8 big-endian bytes, for storage.
+
+    Big-endian matches project()'s MSB-first packing, so the byte order and
+    bit order agree.
+    """
+    return loom_hash.to_bytes(HASH_BITS // 8, "big")
+
+
+def hash_from_bytes(data: bytes) -> int:
+    """Inverse of hash_to_bytes."""
+    if len(data) != HASH_BITS // 8:
+        raise ValueError(f"loom_hash bytes must be {HASH_BITS // 8} bytes, got {len(data)}")
+    return int.from_bytes(data, "big")

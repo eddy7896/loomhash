@@ -3,6 +3,8 @@ from .lsh import (
     LSH_VERSION,
     VECTOR_DIM,
     generate_seed,
+    hash_from_bytes,
+    hash_to_bytes,
     project,
     projection_matrix,
 )
@@ -13,6 +15,8 @@ __all__ = [
     "LSH_VERSION",
     "VECTOR_DIM",
     "generate_seed",
+    "hash_from_bytes",
+    "hash_to_bytes",
     "project",
     "projection_matrix",
     "MATCH_THRESHOLD",

@@ -16,10 +16,24 @@ Persist and retrieve the logical (user_id, seed, loom_hash) tuple via PostgreSQL
 
 - **Constraint 3 (Data Privacy):** only vectors/hashes/seeds and their identifiers may be persisted. Never write raw frames, meshes, or images to any table, cache key, or log — including debug/error logs that might accidentally serialize a request body.
 
-## What is NOT yet defined — do not invent it
+## D-10, D-05 (minimal), and D-06 are resolved — implementation exists
 
-Per [../open-decisions.md](../open-decisions.md) D-10, none of the following are approved yet: exact table/schema design, Redis key format and TTL/eviction policy, cache-vs-database authority on conflicting reads, enrollment-replacement policy (re-enroll overwrites vs. rejects vs. versions), and revocation's partial-failure/consistency behavior across the two stores (see [../architecture.md](../architecture.md)'s trust-boundary note on this race). Do not invent a schema or migration and present it as settled — propose it and flag it as a proposal pending approval.
+Schema, cache policy, replacement policy, and revocation semantics were approved 2026-09-17; see the resolution text in [../open-decisions.md](../open-decisions.md). Implemented in [../../loomhash/storage/](../../loomhash/storage/):
+
+- `backend.py` — the `StorageBackend` abstract contract and `EnrollmentRecord`. Any new backend must satisfy this.
+- `memory.py` — `InMemoryStorageBackend`, a non-durable fake used for tests.
+- `postgres.py` — `PostgresStorageBackend`, the durable source of truth (Postgres table `enrollments`).
+- `redis_cache.py` — `RedisEnrollmentCache`, a write-through cache, never authoritative.
+- `combined.py` — `PostgresRedisStorageBackend`, wiring the two together per the write-through design; `delete()` only reports success if both stores confirm removal.
+
+`psycopg` and `redis-py` were approved as new dependencies for this (see pyproject.toml).
+
+**Important gap:** the Postgres/Redis adapters are import/construction-tested only (`tests/test_storage/test_adapters_construct.py`) — there is no live Postgres or Redis instance in this development environment, so none of the real query/cache/partial-failure behavior has actually been run. Treat `PostgresStorageBackend`, `RedisEnrollmentCache`, and `PostgresRedisStorageBackend` as unverified against real services until someone runs them against an actual PostgreSQL and Redis and updates [../verification-checklist.md](../verification-checklist.md) accordingly. The contract itself (upsert, delete semantics) is verified, but only via `InMemoryStorageBackend`.
+
+## What is still NOT defined
+
+Full caller authentication/authorization (beyond the minimal "trusted caller-supplied user_id" resolution of D-05), API routes/request shapes (that's the API Gateway module's job), and TTL/eviction policy for the Redis cache (current design has no TTL — cache entries live until explicitly overwritten or deleted).
 
 ## Related requirements / decisions
 
-Requirements: ENR-05, AUT-02, REV-01. Open decisions: D-05 (identity/user_id origin), D-06 (memory-constraint wording clarification), D-10.
+Requirements: ENR-05, AUT-02, REV-01. Open decisions: D-05 (resolved, minimal), D-06 (resolved), D-10 (resolved).

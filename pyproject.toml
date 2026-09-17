@@ -1,10 +1,21 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "loomhash"
 version = "0.0.0"
 description = "Self-hosted zero-knowledge biometric microservice (feasibility prototype). See system.md and docs/."
 requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24",
+]
 
 # requires-python enforces system.md constraint 2 (int.bit_count() availability).
-# No dependencies are declared here: none have been approved yet per the
-# "Ask, Do Not Assume" rule in system.md section 1. Add dependencies only with
-# explicit user consent, then list them here.
+# numpy is the only dependency: system.md section 3 already specifies it
+# ("Native Python numpy for seeded LSH projection"). No other dependency is
+# approved yet per the "Ask, Do Not Assume" rule in system.md section 1 --
+# add further dependencies only with explicit user consent, then list them here.
+
+[tool.setuptools.packages.find]
+include = ["loomhash*"]

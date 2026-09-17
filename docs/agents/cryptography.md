@@ -17,10 +17,17 @@ Pure Python: seeded LSH projection of a 128-d vector into a 256-bit loom_hash, a
 - **Constraint 2 (Python Version):** target Python >= 3.10. Hamming distance must use `int.bit_count()`, not `bin(x).count('1')` or a NumPy popcount trick.
 - **Constraint 3 (Data Privacy):** this module only ever handles vectors, seeds, and hashes — never raw images. It should not need to import any image library at all; if it does, stop and ask why.
 
-## What is NOT yet defined — do not invent it
+## D-03 is resolved — implementation exists
 
-Per [../open-decisions.md](../open-decisions.md) D-03, "seeded LSH" has no approved concrete definition yet: projection matrix distribution and dimensions, how the 32-byte seed maps to the RNG, the sign/tie-breaking rule for binarization, numeric precision, and bit ordering. Do not pick one silently — the entire security and matching-accuracy story depends on this choice, and it needs explicit sign-off plus a documented version identifier so a future change doesn't silently break existing enrollments.
+The seeded-LSH definition (projection distribution, seed-to-RNG mapping, sign rule, precision, bit order) was approved 2026-09-17 and is implemented in [../../loomhash/cryptography/lsh.py](../../loomhash/cryptography/lsh.py) as `LSH_VERSION = 1`, with matching logic in [../../loomhash/cryptography/matching.py](../../loomhash/cryptography/matching.py). Tests against synthetic (non-biometric) vectors live in [../../tests/test_cryptography/](../../tests/test_cryptography/). See the resolution text in [../open-decisions.md](../open-decisions.md) for the exact parameters.
+
+**Do not change any parameter of the existing scheme (distribution, HASH_BITS, sign rule, packing order) without bumping `LSH_VERSION` and recording the change in open-decisions.md** — doing so silently would make new hashes incomparable with every previously stored hash.
+
+## What is still NOT covered by this module
+
+- Real biometric evaluation (genuine/impostor accuracy) — the existing tests only establish algorithmic determinism and boundary correctness with synthetic vectors, not biometric accuracy. See the proposed validation sequence in [../open-decisions.md](../open-decisions.md).
+- Any formal zero-knowledge proof property (D-08, deferred) — this module is a similarity-hashing scheme, not a ZK protocol, unless and until that's separately designed and approved.
 
 ## Related requirements / decisions
 
-Requirements: ENR-04, AUT-02, AUT-03, AUT-04. Open decisions: D-03. Deferred for the prototype milestone: any formal zero-knowledge proof property (D-08) — this module is a similarity-hashing scheme, not a ZK protocol, unless and until that's separately designed and approved.
+Requirements: ENR-04, AUT-02, AUT-03, AUT-04. Open decisions: D-03 (resolved).

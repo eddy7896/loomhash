@@ -9,12 +9,12 @@ Status values: **Pending** (not yet implemented or not yet tested), **Verified**
 | ENR-01 | Capture 12 views across a 1s yaw rotation | Pending | D-02 | — |
 | ENR-02 | Compute mean 3D landmarks -> 128-d rigid-distance vector | Pending | D-01 | — |
 | ENR-03 | Transmit only the numerical vector | Pending | D-05 (identity/control metadata) | — |
-| ENR-04 | Random 32-byte seed + seeded LSH -> 256-bit loom_hash | Pending | D-03 | — |
+| ENR-04 | Random 32-byte seed + seeded LSH -> 256-bit loom_hash | Verified (algorithmic only) | — | `generate_seed`/`project` in [loomhash/cryptography/lsh.py](../loomhash/cryptography/lsh.py), tested in [tests/test_cryptography/test_lsh.py](../tests/test_cryptography/test_lsh.py) (determinism, seed/vector sensitivity, range, input validation) against synthetic vectors. Biometric-accuracy evaluation is separately required per the proposed validation sequence below before this can be called biometrically verified. |
 | ENR-05 | Persist (user_id, seed, loom_hash) | Pending | D-10 (schema) | — |
 | AUT-01 | Single-frame capture -> same 128-d feature representation | Pending | D-01, D-02 | — |
 | AUT-02 | Retrieve stored seed/template, project query with stored seed | Pending | D-10 | — |
-| AUT-03 | `(stored_hash ^ query_hash).bit_count() / 256.0` | Pending | D-03 | — |
-| AUT-04 | 200 if distance <= 0.20 else 401 | Pending | AUT-03 | — |
+| AUT-03 | `(stored_hash ^ query_hash).bit_count() / 256.0` | Verified | — | `hamming_distance` in [loomhash/cryptography/matching.py](../loomhash/cryptography/matching.py), tested in [tests/test_cryptography/test_matching.py](../tests/test_cryptography/test_matching.py) against known bit-pattern hashes (identical, fully-different, 51-bit-difference cases). |
+| AUT-04 | 200 if distance <= 0.20 else 401 | Verified (matching logic only) | — | `is_match` boundary tested at exactly 51/256 (accept) and 52/256 (reject) in `test_matching.py::TestIsMatch`. The actual HTTP 200/401 response mapping is not yet implemented (no API gateway code exists) — this row covers only the threshold decision `is_match` encodes. |
 | REV-01 | Delete user's seed from PostgreSQL and Redis on revocation | Pending | D-05, D-10 | — |
 
 ## How to fill in evidence

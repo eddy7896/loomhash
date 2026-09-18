@@ -1,0 +1,19 @@
+# Training-only tooling for the Inference module (D-04). Deliberately kept
+# OUT of pyproject.toml -- none of this ships to production. The original
+# ONNX spec explicitly says never add torch/torchvision to production;
+# onnxruntime is the only dependency the production Inference module will
+# need once it's actually built (blocked on D-12), and it'll be added to
+# pyproject.toml's main dependencies at that point, not here.
+#
+# Not needed locally if you use training/colab_train_stage1.ipynb -- Colab
+# has torch/torchvision preinstalled and this file's other packages get
+# installed by the notebook's first cell. This file is for anyone who wants
+# to run training/generate_labels.py or reproduce training locally instead.
+
+torch
+torchvision
+timm
+mediapipe
+datasets
+onnx
+onnxruntime

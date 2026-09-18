@@ -7,7 +7,6 @@ RUN pip install --no-cache-dir --upgrade pip
 
 # Copy project files
 COPY pyproject.toml .
-COPY README.md .
 
 # Install dependencies (no test dependencies)
 RUN pip install --no-cache-dir .

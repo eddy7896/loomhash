@@ -76,29 +76,18 @@ docs/verification-checklist.md's ENR-05/AUT-02/REV-01 rows to reflect that
 the real Postgres/Redis adapters — not just the in-memory fake — are now
 verified, and note the date and how it was run.
 
-## 7. Pointing the actual API at these services
+## 7. Pointing the actual API at these services (Now Containerized!)
 
-`loomhash.api.create_app()` defaults to `InMemoryStorageBackend`. To use the
-real backend instead:
+The API is now fully containerized via `Dockerfile` and configured in `docker-compose.yml`. When you run `docker compose up -d`, the `api` service is built automatically and starts running on port 8000. 
 
-```python
-from loomhash.storage.combined import PostgresRedisStorageBackend
-from loomhash.storage.postgres import PostgresStorageBackend
-from loomhash.storage.redis_cache import RedisEnrollmentCache
-import redis
+It uses the `loomhash.api.main_prod` entrypoint, which automatically constructs the `PostgresRedisStorageBackend` using the credentials from `.env` and passes it to `create_app()`.
 
-postgres = PostgresStorageBackend("postgresql://loomhash:<password>@127.0.0.1:5432/loomhash")
-postgres.ensure_schema()
-cache = RedisEnrollmentCache(redis.Redis(host="127.0.0.1", port=6379, password="<password>"))
-storage = PostgresRedisStorageBackend(postgres, cache)
-
-app = create_app(storage)  # instead of create_app()
+To access the API from your dev machine, you can update your SSH tunnel to also forward port 8000:
+```sh
+ssh -N -L 5432:127.0.0.1:5432 -L 6379:127.0.0.1:6379 -L 8000:127.0.0.1:8000 <your-user>@<vps-host>
 ```
 
-There's no wired-up entrypoint for this yet (`loomhash/api/__main__.py` still
-defaults to the in-memory backend for local smoke-testing) — wiring a real
-deployment entrypoint (reading connection info from environment variables,
-running behind Caddy per system.md) is a separate, not-yet-done step.
+You can then test the API via `http://127.0.0.1:8000/docs` (FastAPI Swagger UI).
 
 ## Stopping / resetting
 

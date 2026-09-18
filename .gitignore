@@ -29,6 +29,7 @@ Thumbs.db
 # Training scratch space (see training/README.md) -- downloaded models,
 # generated labels, checkpoints, and exported ONNX artifacts are not source
 # and are not committed. The trained .onnx this eventually produces gets
+# added deliberately, in its own commit, once it exists.
 # added deliberately in its own commit (loomhash/inference/models/).
 training/models/
 training/*.jsonl

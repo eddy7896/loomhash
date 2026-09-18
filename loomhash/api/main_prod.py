@@ -27,3 +27,4 @@ def get_prod_app() -> FastAPI:
     return create_app(storage=storage, enable_dev_cors=False)
 
 app = get_prod_app()
+

@@ -8,6 +8,28 @@
  * the two. Keeping this file MediaPipe-shape-agnostic makes it fully
  * unit-testable with synthetic data and isolates any wrong assumption
  * about MediaPipe's exact field names to one small, clearly-flagged file.
+ * **Status (D-13, resolved 2026-09-18): superseded for the production inference
+ * path, retained as a documented reference and fallback.**
+ * Under the original architecture this computed the 128-d vector client-side
+ * from MediaPipe landmarks and sent it to the server. After D-04/D-08's
+ * revision the server's Inference module computes the vector directly from raw
+ * face images via ONNX, making this client-side geometric math redundant for
+ * the main pipeline. It is deliberately kept:
+ *   - as a reference implementation of the feature definition (the ONNX
+ *     model was distilled to reproduce this math);
+ *   - as a potential fallback path if server-side inference is unavailable;
+ *   - because removing tested, well-documented code requires an explicit
+ *     decision (per the \"Ask, Do Not Assume\" protocol), and that decision
+ *     was to keep it (see docs/open-decisions.md D-13).
+ * The 15 unit tests in feature_extraction.test.mjs and capture.test.mjs
+ * continue to pass and are maintained.
+ *
+ * Original description:
+ * Operates on plain {x,y,z} landmark data, NOT MediaPipe's result objects
+ * directly -- see mediapipe_adapter.mjs for the (browser-unverified) bridge
+ * between the two. Keeping this file MediaPipe-shape-agnostic makes it fully
+ * unit-testable with synthetic data and isolates any wrong assumption about
+ * MediaPipe's exact field names to one small, clearly-flagged file.
  *
  * Feature definition: for each frame, take the 468 canonical (non-iris)
  * face-mesh landmarks, compute their centroid and RMS radius (root-mean-

@@ -8,20 +8,18 @@ Server-side, CPU-only ONNX Runtime execution of an INT8-quantized MobileNetV4-ba
 
 **This is a real architecture change from how the project started.** Originally (and as this file used to say) the server was vector-only and any server-side image processing was forbidden. That was revised 2026-09-18 after extended discussion with the user about model-weight protection and future retraining needs — see [../open-decisions.md](../open-decisions.md)'s D-04/D-08 resolution for the full reasoning. Don't "fix" this module back toward vector-only input; that would undo an explicit, reasoned decision.
 
-## D-04 is resolved (architecture only) — no code exists yet
+## D-04 is fully implemented
 
-The I/O contract is defined and approved:
+The I/O contract is defined and wired in `loomhash/inference/engine.py`:
 
 - **Input:** tensor name `"input"`, shape `[1, 3, 224, 224]`, float32, RGB, normalized with ImageNet mean `[0.485, 0.456, 0.406]` / std `[0.229, 0.224, 0.225]`.
 - **Output:** tensor name `"output"`, shape `[1, 128]`, float32 — the 128-d vector, fed directly into [loomhash/cryptography/lsh.py](../../loomhash/cryptography/lsh.py)'s `project()`.
-- **Runtime:** `onnxruntime.InferenceSession(path, providers=["CPUExecutionProvider"])`, loaded once at process startup, not per request. `onnxruntime` is the dependency to add — not `torch`/`torchvision`.
+- **Runtime:** `onnxruntime.InferenceSession(_MODEL_PATH, providers=["CPUExecutionProvider"])`, loaded once at process startup, not per request.
+- **Model file:** `loom_engine_int8.onnx` is located at `loomhash/inference/models/`.
 
-**Do not write integration code yet.** The `loom_engine_int8.onnx` model file does not exist — training it is a substantial separate ML project (data collection, training loop, INT8 export), explicitly out of scope for this session. The user was offered the option to build integration plumbing against a placeholder/mock model file and explicitly declined (2026-09-18), choosing to wait for the real artifact. Do not write `onnxruntime.InferenceSession` calls, add `onnxruntime` to pyproject.toml, or fabricate a placeholder .onnx file unless the user asks for that specifically — it was a considered "not yet," not an oversight.
+## What blocks further work
 
-## What else blocks real implementation, even once a model file exists
-
-- **D-12** (unresolved): the API Gateway's `/v1/enroll`/`/v1/authenticate` routes currently accept `{user_id, vector[128]}` — built and tested under the old vector-only architecture. They need to accept image data instead, and the request encoding (multipart, base64-JSON, raw bytes) isn't decided. Don't touch `loomhash/api/schemas.py`/`app.py` for this until D-12 is resolved.
-- **D-13** (unresolved): [../../edge/feature_extraction.mjs](../../edge/feature_extraction.mjs) and [../../edge/capture.mjs](../../edge/capture.mjs) implement the now-superseded client-side geometric-math feature computation, with 15 passing tests. Their disposition (keep as fallback, repurpose, retire) isn't decided. Don't delete or stop maintaining them without that decision.
+- **D-11** (unresolved): The Feature 4 opt-in pipeline (retraining loop) is undefined. Do not implement retention for model improvement yet.
 
 ## Immutable constraints that apply here
 

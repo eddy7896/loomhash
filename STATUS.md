@@ -180,3 +180,11 @@ Review docs/open-decisions.md and resolve feature extraction, projection, and se
   - Told the user the immediate unblock for their live session (skip the cell, continue -- FairFace+CelebA were already loaded) separately from the permanent repo fix, since they couldn't wait for a new notebook file mid-run.
   - Updated training/README.md's dataset table to mark WIDER FACE "optional, currently unavailable via `datasets`" with the specific error and investigation findings, rather than silently downgrading it.
   - Validated the notebook JSON after each fix; re-ran `python scripts/check_docs.py` clean.
+
+## 2026-09-18 Session 2
+
+- Implemented Inference module with onnxruntime and loom_engine_int8.onnx
+- Rewrote API Gateway routes to accept multipart/form-data (D-12)
+- Wrote test suites for inference module and new multipart routes (59/59 passing)
+- Updated edge JS documentation to mark geometric feature extraction as superseded (D-13)
+- Updated documentation: open-decisions.md, agents/inference.md, agents/api-gateway.md, verification-checklist.md

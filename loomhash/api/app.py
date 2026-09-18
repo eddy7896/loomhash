@@ -25,6 +25,7 @@ docs/agents/compliance.md).
 from __future__ import annotations
 
 from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 
 from loomhash.compliance import RevocationDenied
 from loomhash.compliance import revoke as process_revocation
@@ -51,7 +52,7 @@ def get_storage(request: Request) -> StorageBackend:
     return request.app.state.storage
 
 
-def create_app(storage: StorageBackend | None = None) -> FastAPI:
+def create_app(storage: StorageBackend | None = None, *, enable_dev_cors: bool = False) -> FastAPI:
     """Build the LoomHash API app.
 
     storage defaults to InMemoryStorageBackend -- a non-durable prototype
@@ -60,9 +61,24 @@ def create_app(storage: StorageBackend | None = None) -> FastAPI:
     beyond local development; see docs/agents/storage.md for why that
     adapter isn't the default here (untested against live services in
     this development environment).
+
+    enable_dev_cors defaults to False (no CORS headers at all) so tests and
+    any real deployment aren't silently permissive. Pass True only for local
+    manual testing (see __main__.py and edge/README.md) -- it allows any
+    http://localhost:<port> or http://127.0.0.1:<port> origin, which is fine
+    for a developer's own machine but must never be enabled as-is in an
+    actual deployment.
     """
     app = FastAPI(title="LoomHash", version="0.0.0")
     app.state.storage = storage if storage is not None else InMemoryStorageBackend()
+
+    if enable_dev_cors:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origin_regex=r"http://(localhost|127\.0\.0\.1):\d+",
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
 
     @app.post("/v1/enroll", response_model=EnrollResponse)
     def enroll(body: EnrollRequest, storage: StorageBackend = Depends(get_storage)) -> EnrollResponse:

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>LoomHash Edge Extraction — manual test applet</title>
+    <style>
+      body { font-family: system-ui, sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1rem; }
+      video { width: 100%; max-width: 480px; background: #222; border-radius: 8px; }
+      #status { white-space: pre-wrap; background: #f4f4f4; padding: 0.75rem; border-radius: 6px; min-height: 4rem; font-family: monospace; font-size: 0.85rem; }
+      button { margin: 0.25rem 0.25rem 0.25rem 0; padding: 0.5rem 0.9rem; }
+      input { padding: 0.4rem; }
+      .row { margin: 0.75rem 0; }
+    </style>
+  </head>
+  <body>
+    <h1>LoomHash Edge Extraction — manual test applet</h1>
+    <p>
+      Not a product UI — a throwaway page to manually verify the edge-extraction
+      pipeline (camera → MediaPipe → feature vector → LoomHash API) actually works
+      end to end in a real browser. See <code>edge/README.md</code> for how to run
+      this and the LoomHash API together.
+    </p>
+
+    <video id="video" autoplay muted playsinline></video>
+
+    <div class="row">
+      <button id="init-btn">1. Start camera + load MediaPipe</button>
+    </div>
+
+    <div class="row">
+      <label>user_id: <input id="user-id" type="text" value="test-user" /></label>
+    </div>
+
+    <div class="row">
+      <button id="enroll-btn">2. Enroll (12 frames, ~1s — turn your head slowly)</button>
+      <button id="auth-btn">3. Authenticate (1 frame)</button>
+      <button id="revoke-btn">4. Revoke</button>
+    </div>
+
+    <h3>Status</h3>
+    <div id="status"></div>
+
+    <p>
+      Open the browser console too — the raw MediaPipe result is logged there for
+      every frame, so <code>edge/mediapipe_adapter.mjs</code>'s field-name
+      assumptions can be checked against what your browser actually returns.
+    </p>
+
+    <script type="module" src="./main.mjs"></script>
+  </body>
+</html>

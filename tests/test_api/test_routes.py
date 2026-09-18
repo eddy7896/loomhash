@@ -98,6 +98,27 @@ class TestApiRoutes(unittest.TestCase):
         )
         self.assertEqual(resp.status_code, 422)
 
+    def test_cors_disabled_by_default(self):
+        resp = self.client.options(
+            "/v1/enroll",
+            headers={
+                "Origin": "http://localhost:5500",
+                "Access-Control-Request-Method": "POST",
+            },
+        )
+        self.assertNotIn("access-control-allow-origin", resp.headers)
+
+    def test_dev_cors_allows_localhost_origins_when_enabled(self):
+        client = TestClient(create_app(InMemoryStorageBackend(), enable_dev_cors=True))
+        resp = client.options(
+            "/v1/enroll",
+            headers={
+                "Origin": "http://localhost:5500",
+                "Access-Control-Request-Method": "POST",
+            },
+        )
+        self.assertEqual(resp.headers.get("access-control-allow-origin"), "http://localhost:5500")
+
     def test_re_enroll_upserts_with_a_fresh_seed(self):
         # Re-enrollment generates a new random seed, so the OLD vector no
         # longer authenticates even though it authenticated before.

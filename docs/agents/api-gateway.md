@@ -2,6 +2,8 @@
 
 Read this before touching FastAPI routes or request/response handling. Also read [../memory-system.md](../memory-system.md)'s session-start protocol first.
 
+**Architecture revision pending, 2026-09-18 (D-12, unresolved):** system.md's pipeline was revised so the server's Inference module now receives raw images and computes the 128-d vector server-side (see [inference.md](inference.md), [../open-decisions.md](../open-decisions.md) D-04/D-08). This module's routes have **not yet been updated to match** — everything below describing a vector-only request body reflects the current, still-live code, which is now built against a superseded design. Do not "helpfully" rework the routes to accept images without D-12 being resolved first (request encoding isn't decided yet); also don't assume the vector-only description below is still the target architecture.
+
 ## Role
 
 FastAPI + Uvicorn (behind Caddy) service that receives numerical biometric input from clients and coordinates the enrollment/authentication flows across the Cryptography and Storage modules. Owns request validation and HTTP-level response semantics; does not own the LSH/matching math or persistence details itself.
@@ -36,4 +38,4 @@ Caller authentication/authorization beyond the "trusted caller-supplied user_id"
 
 ## Related requirements / decisions
 
-Requirements: ENR-03, ENR-05, AUT-01..AUT-04, REV-01 (as the entry point coordinating storage/compliance). Open decisions: D-05 (resolved, minimal), D-06 (resolved), D-10 (resolved).
+Requirements: ENR-03, ENR-05, AUT-01..AUT-04, REV-01 (as the entry point coordinating storage/compliance). Open decisions: D-05 (resolved, minimal), D-06 (resolved), D-10 (resolved), D-12 (unresolved, blocking any request-schema rework).

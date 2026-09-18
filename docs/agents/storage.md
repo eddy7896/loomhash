@@ -30,6 +30,8 @@ Schema, cache policy, replacement policy, and revocation semantics were approved
 
 **Important gap:** the Postgres/Redis adapters are import/construction-tested only (`tests/test_storage/test_adapters_construct.py`) — there is no live Postgres or Redis instance in this development environment, so none of the real query/cache/partial-failure behavior has actually been run. Treat `PostgresStorageBackend`, `RedisEnrollmentCache`, and `PostgresRedisStorageBackend` as unverified against real services until someone runs them against an actual PostgreSQL and Redis and updates [../verification-checklist.md](../verification-checklist.md) accordingly. The contract itself (upsert, delete semantics) is verified, but only via `InMemoryStorageBackend`.
 
+**Closing this gap:** [../../deploy/](../../deploy/) has a `docker-compose.yml` for running real Postgres/Redis (e.g. on a VPS, loopback-bound with required passwords) plus [../../scripts/verify_live_storage.py](../../scripts/verify_live_storage.py), a manual round-trip check against those live services. Neither has actually been run yet as of 2026-09-18 (no VPS access from this session) — see deploy/README.md for the full flow (SSH tunnel + running the verify script). Once someone runs it successfully, update this file and verification-checklist.md's ENR-05/AUT-02/REV-01 rows — don't leave them saying "untested" after they've actually been tested.
+
 ## What is still NOT defined
 
 Full caller authentication/authorization (beyond the minimal "trusted caller-supplied user_id" resolution of D-05), API routes/request shapes (that's the API Gateway module's job), and TTL/eviction policy for the Redis cache (current design has no TTL — cache entries live until explicitly overwritten or deleted).

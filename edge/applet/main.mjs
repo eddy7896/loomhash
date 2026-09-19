@@ -1,26 +1,20 @@
 /**
- * Manual test applet wiring: camera -> MediaPipe -> feature vector -> LoomHash API.
+ * Manual test applet wiring: camera -> image frames -> LoomHash API.
  *
- * Not a product UI. See edge/README.md for how to run this. The MediaPipe
- * CDN URLs and model asset URL below are the standard published pattern
- * from MediaPipe's tasks-vision examples; they were not exercised against
- * a live browser while this was written (no browser available in the
- * development environment) -- if FaceLandmarker.createFromOptions() fails
- * to load, check MediaPipe's current docs for an updated model URL.
+ * This reflects the D-04/D-12 Server-Side Inference architecture where the
+ * edge device just captures JPEGs and POSTs them via multipart/form-data.
+ * The old MediaPipe edge extraction has been superseded.
  */
-
-import { FaceLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.mjs";
-
-import { computeAuthenticationVector, computeEnrollmentVector, ENROLLMENT_FRAME_COUNT } from "../capture.mjs";
-import { frameFromFaceLandmarkerResult } from "../mediapipe_adapter.mjs";
 
 const API_BASE = "http://127.0.0.1:8000";
 
 const videoEl = document.getElementById("video");
 const statusEl = document.getElementById("status");
 const userIdEl = document.getElementById("user-id");
+const canvasEl = document.createElement("canvas");
+const ctx = canvasEl.getContext("2d");
 
-let faceLandmarker = null;
+const ENROLLMENT_FRAME_COUNT = 12;
 
 function log(message) {
   statusEl.textContent += `${message}\n`;
@@ -31,61 +25,37 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function initMediaPipe() {
-  log("Loading MediaPipe FaceLandmarker (this can take a few seconds)...");
-  const vision = await FilesetResolver.forVisionTasks(
-    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm",
-  );
-  faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
-    baseOptions: {
-      modelAssetPath:
-        "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
-      delegate: "GPU",
-    },
-    runningMode: "VIDEO",
-    numFaces: 1,
-  });
-  log("FaceLandmarker ready.");
-}
-
 async function startCamera() {
-  const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+  log("Requesting camera access...");
+  const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
   videoEl.srcObject = stream;
   await videoEl.play();
+  
+  canvasEl.width = videoEl.videoWidth;
+  canvasEl.height = videoEl.videoHeight;
   log("Camera started.");
 }
 
-function detectFrame() {
-  const result = faceLandmarker.detectForVideo(videoEl, performance.now());
-  // Logged so mediapipe_adapter.mjs's field-name assumptions can be checked
-  // against what your MediaPipe version actually returns.
-  console.log("raw FaceLandmarkerResult:", result);
-  return frameFromFaceLandmarkerResult(result);
+// Captures a frame from the video element and returns a Blob (JPEG)
+function captureJpegBlob() {
+  return new Promise((resolve) => {
+    ctx.drawImage(videoEl, 0, 0, canvasEl.width, canvasEl.height);
+    canvasEl.toBlob((blob) => resolve(blob), "image/jpeg", 0.9);
+  });
 }
 
-async function captureEnrollmentFrames() {
-  const frames = [];
+async function captureEnrollmentImages() {
+  const blobs = [];
   const intervalMs = 1000 / ENROLLMENT_FRAME_COUNT;
   for (let i = 0; i < ENROLLMENT_FRAME_COUNT; i++) {
-    frames.push(detectFrame());
+    blobs.push(await captureJpegBlob());
     await sleep(intervalMs);
   }
-  return frames;
-}
-
-async function postJson(path, body) {
-  const resp = await fetch(`${API_BASE}${path}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  const data = await resp.json().catch(() => ({}));
-  return { status: resp.status, data };
+  return blobs;
 }
 
 document.getElementById("init-btn").addEventListener("click", async () => {
   try {
-    await initMediaPipe();
     await startCamera();
   } catch (err) {
     log(`Setup failed: ${err.message}`);
@@ -95,43 +65,61 @@ document.getElementById("init-btn").addEventListener("click", async () => {
 document.getElementById("enroll-btn").addEventListener("click", async () => {
   const userId = userIdEl.value.trim();
   if (!userId) return log("Enter a user_id first.");
-  if (!faceLandmarker) return log("Click 'Start camera + load MediaPipe' first.");
+  if (!videoEl.srcObject) return log("Click 'Start camera' first.");
 
   log("Turn your head slowly for about 1 second...");
-  const frames = await captureEnrollmentFrames();
-  let vector;
+  const blobs = await captureEnrollmentImages();
+  
+  const formData = new FormData();
+  formData.append("user_id", userId);
+  blobs.forEach((blob, i) => formData.append("images", blob, `frame_${i}.jpg`));
+
+  log("Uploading frames to API (this will process on the server)...");
   try {
-    vector = computeEnrollmentVector(frames);
+    const resp = await fetch(`${API_BASE}/v1/enroll`, {
+      method: "POST",
+      body: formData,
+    });
+    const data = await resp.json().catch(() => ({}));
+    log(`POST /v1/enroll -> ${resp.status} ${JSON.stringify(data)}`);
   } catch (err) {
-    log(`Enrollment vector computation failed: ${err.message}`);
-    return;
+    log(`Fetch failed: ${err.message}`);
   }
-  const { status, data } = await postJson("/v1/enroll", { user_id: userId, vector });
-  log(`POST /v1/enroll -> ${status} ${JSON.stringify(data)}`);
 });
 
 document.getElementById("auth-btn").addEventListener("click", async () => {
   const userId = userIdEl.value.trim();
   if (!userId) return log("Enter a user_id first.");
-  if (!faceLandmarker) return log("Click 'Start camera + load MediaPipe' first.");
+  if (!videoEl.srcObject) return log("Click 'Start camera' first.");
 
-  const frame = detectFrame();
-  let vector;
+  log("Capturing authentication frame...");
+  const blob = await captureJpegBlob();
+  
+  const formData = new FormData();
+  formData.append("user_id", userId);
+  formData.append("image", blob, "auth.jpg");
+
   try {
-    vector = computeAuthenticationVector(frame);
+    const resp = await fetch(`${API_BASE}/v1/authenticate`, {
+      method: "POST",
+      body: formData,
+    });
+    const data = await resp.json().catch(() => ({}));
+    log(`POST /v1/authenticate -> ${resp.status} ${JSON.stringify(data)}`);
   } catch (err) {
-    log(`Authentication vector computation failed: ${err.message}`);
-    return;
+    log(`Fetch failed: ${err.message}`);
   }
-  const { status, data } = await postJson("/v1/authenticate", { user_id: userId, vector });
-  log(`POST /v1/authenticate -> ${status} ${JSON.stringify(data)}`);
 });
 
 document.getElementById("revoke-btn").addEventListener("click", async () => {
   const userId = userIdEl.value.trim();
   if (!userId) return log("Enter a user_id first.");
 
-  const resp = await fetch(`${API_BASE}/v1/users/${encodeURIComponent(userId)}`, { method: "DELETE" });
-  const data = await resp.json().catch(() => ({}));
-  log(`DELETE /v1/users/${userId} -> ${resp.status} ${JSON.stringify(data)}`);
+  try {
+    const resp = await fetch(`${API_BASE}/v1/users/${encodeURIComponent(userId)}`, { method: "DELETE" });
+    const data = await resp.json().catch(() => ({}));
+    log(`DELETE /v1/users/${userId} -> ${resp.status} ${JSON.stringify(data)}`);
+  } catch (err) {
+    log(`Fetch failed: ${err.message}`);
+  }
 });

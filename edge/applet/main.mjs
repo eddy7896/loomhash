@@ -11,6 +11,7 @@ const API_BASE = "http://127.0.0.1:8000";
 const videoEl = document.getElementById("video");
 const statusEl = document.getElementById("status");
 const userIdEl = document.getElementById("user-id");
+const cameraSelect = document.getElementById("camera-select");
 const canvasEl = document.createElement("canvas");
 const ctx = canvasEl.getContext("2d");
 
@@ -25,15 +26,55 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// Populate the camera select dropdown with available video devices
+async function populateCameras() {
+  try {
+    // Request permission first to get the real device labels
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    stream.getTracks().forEach(track => track.stop());
+  } catch (err) {
+    log(`Warning: Could not get initial camera permissions: ${err.message}`);
+  }
+
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const videoDevices = devices.filter(d => d.kind === "videoinput");
+    
+    // Only repopulate if we found something, to avoid wiping default
+    if (videoDevices.length > 0) {
+      cameraSelect.innerHTML = "";
+      videoDevices.forEach((device, index) => {
+        const option = document.createElement("option");
+        option.value = device.deviceId;
+        option.text = device.label || `Camera ${index + 1}`;
+        cameraSelect.appendChild(option);
+      });
+    }
+  } catch (err) {
+    log(`Failed to enumerate devices: ${err.message}`);
+  }
+}
+
 async function startCamera() {
   log("Requesting camera access...");
-  const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+  
+  // Stop existing stream if any
+  if (videoEl.srcObject) {
+    videoEl.srcObject.getTracks().forEach(track => track.stop());
+  }
+
+  const deviceId = cameraSelect.value;
+  const constraints = {
+    video: deviceId ? { deviceId: { exact: deviceId } } : { facingMode: "user" }
+  };
+
+  const stream = await navigator.mediaDevices.getUserMedia(constraints);
   videoEl.srcObject = stream;
   await videoEl.play();
   
   canvasEl.width = videoEl.videoWidth;
   canvasEl.height = videoEl.videoHeight;
-  log("Camera started.");
+  log(`Camera started: ${stream.getVideoTracks()[0].label}`);
 }
 
 // Captures a frame from the video element and returns a Blob (JPEG)
@@ -56,9 +97,24 @@ async function captureEnrollmentImages() {
 
 document.getElementById("init-btn").addEventListener("click", async () => {
   try {
+    // If the dropdown only has the default option, try to populate it
+    if (cameraSelect.options.length <= 1) {
+      await populateCameras();
+    }
     await startCamera();
   } catch (err) {
     log(`Setup failed: ${err.message}`);
+  }
+});
+
+// Re-start camera automatically when the selected camera changes
+cameraSelect.addEventListener("change", async () => {
+  if (videoEl.srcObject) {
+    try {
+      await startCamera();
+    } catch (err) {
+      log(`Failed to switch camera: ${err.message}`);
+    }
   }
 });
 

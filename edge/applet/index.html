@@ -2,21 +2,21 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>LoomHash API Gateway â€” manual test applet</title>
+    <title>LoomHash API Gateway -- manual test applet</title>
     <style>
       body { font-family: system-ui, sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1rem; }
       video { width: 100%; max-width: 480px; background: #222; border-radius: 8px; }
       #status { white-space: pre-wrap; background: #f4f4f4; padding: 0.75rem; border-radius: 6px; min-height: 4rem; font-family: monospace; font-size: 0.85rem; }
-      button { margin: 0.25rem 0.25rem 0.25rem 0; padding: 0.5rem 0.9rem; }
+      button, select { margin: 0.25rem 0.25rem 0.25rem 0; padding: 0.5rem 0.9rem; }
       input { padding: 0.4rem; }
       .row { margin: 0.75rem 0; }
     </style>
   </head>
   <body>
-    <h1>LoomHash API Gateway â€” manual test applet</h1>
+    <h1>LoomHash API Gateway -- manual test applet</h1>
     <p>
-      Not a product UI â€” a throwaway page to manually verify the server-side inference
-      pipeline (camera â†’ multipart/form-data upload â†’ LoomHash API ONNX Model) actually works
+      Not a product UI -- a throwaway page to manually verify the server-side inference
+      pipeline (camera -> multipart/form-data upload -> LoomHash API ONNX Model) actually works
       end to end in a real browser. See <code>edge/README.md</code> for how to run
       this and the LoomHash API together.
     </p>
@@ -25,6 +25,9 @@
 
     <div class="row">
       <button id="init-btn">1. Start camera</button>
+      <select id="camera-select">
+        <option value="">Default Camera</option>
+      </select>
     </div>
 
     <div class="row">
@@ -32,7 +35,7 @@
     </div>
 
     <div class="row">
-      <button id="enroll-btn">2. Enroll (12 frames, ~1s â€” turn your head slowly)</button>
+      <button id="enroll-btn">2. Enroll (12 frames, ~1s -- turn your head slowly)</button>
       <button id="auth-btn">3. Authenticate (1 frame)</button>
       <button id="revoke-btn">4. Revoke</button>
     </div>

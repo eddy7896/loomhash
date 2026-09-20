@@ -28,23 +28,22 @@ class SettingUpdate(BaseModel):
     value: str
 
 
+from fastapi import Request
+
 #
 # Dependencies
 #
 
-def get_key_store() -> APIKeyStore:
-    # This must be overridden in __main__.py or main_prod.py
-    raise NotImplementedError
+def get_key_store(request: Request) -> APIKeyStore:
+    return request.app.state.key_store
 
 
-def get_admin_store() -> AdminStore:
-    # This must be overridden in __main__.py or main_prod.py
-    raise NotImplementedError
+def get_admin_store(request: Request) -> AdminStore:
+    return request.app.state.admin_store
 
 
-def get_storage_backend() -> StorageBackend:
-    # This must be overridden in __main__.py or main_prod.py
-    raise NotImplementedError
+def get_storage_backend(request: Request) -> StorageBackend:
+    return request.app.state.storage
 
 
 #

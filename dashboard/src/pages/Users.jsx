@@ -1,4 +1,8 @@
 import { useState, useEffect } from 'react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 export default function Users() {
   const [data, setData] = useState(null);
@@ -13,47 +17,56 @@ export default function Users() {
   }, []);
 
   return (
-    <div className="users-page">
-      <h1>Users</h1>
-      <p className="subtitle">Data subjects currently enrolled in the system.</p>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Users</h1>
+        <p className="text-muted-foreground mt-2">Data subjects currently enrolled in the system.</p>
+      </div>
 
-      <div className="card">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>User ID</th>
-              <th>Status</th>
-              <th style={{textAlign: 'right'}}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
+      <Card>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>User ID</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {loading ? (
-              <tr>
-                <td colSpan="3" className="loading-pulse" style={{textAlign: 'center'}}>Loading users...</td>
-              </tr>
+              <TableRow>
+                <TableCell colSpan={3} className="text-center h-24 text-muted-foreground animate-pulse">
+                  Loading users...
+                </TableCell>
+              </TableRow>
             ) : !data || data.users.length === 0 ? (
-              <tr>
-                <td colSpan="3" style={{textAlign: 'center', color: 'var(--text-muted)'}}>No users enrolled yet.</td>
-              </tr>
+              <TableRow>
+                <TableCell colSpan={3} className="text-center h-24 text-muted-foreground">
+                  No users enrolled yet.
+                </TableCell>
+              </TableRow>
             ) : (
               data.users.map((userId) => (
-                <tr key={userId}>
-                  <td className="text-mono">{userId}</td>
-                  <td><span className="badge badge-active">Enrolled</span></td>
-                  <td style={{textAlign: 'right'}}>
-                    <button 
-                      className="btn btn-secondary" 
+                <TableRow key={userId}>
+                  <TableCell className="font-mono font-medium">{userId}</TableCell>
+                  <TableCell>
+                    <Badge variant="success">Enrolled</Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button 
+                      variant="outline"
+                      size="sm"
                       onClick={() => alert('View user details coming soon.')}
                     >
                       View
-                    </button>
-                  </td>
-                </tr>
+                    </Button>
+                  </TableCell>
+                </TableRow>
               ))
             )}
-          </tbody>
-        </table>
-      </div>
+          </TableBody>
+        </Table>
+      </Card>
     </div>
   );
 }

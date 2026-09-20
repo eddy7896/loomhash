@@ -1,4 +1,9 @@
 import { useState, useEffect } from 'react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 
 export default function Keys() {
   const [keys, setKeys] = useState([]);
@@ -41,92 +46,93 @@ export default function Keys() {
   };
 
   return (
-    <div className="keys-page">
-      <div className="flex-between">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1>Authentication</h1>
-          <p className="subtitle">Manage API keys to authenticate your server requests.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Authentication</h1>
+          <p className="text-muted-foreground mt-2">Manage API keys to authenticate your server requests.</p>
         </div>
-        <button className="btn btn-primary" onClick={handleGenerate}>Generate New Key</button>
+        <Button onClick={handleGenerate}>Generate New Key</Button>
       </div>
 
       {newKey && (
-        <div className="card" style={{ borderColor: 'var(--accent-blue)', backgroundColor: 'rgba(59, 130, 246, 0.05)' }}>
-          <div className="card-body">
-            <h3 style={{ color: 'var(--accent-blue)', marginBottom: '12px' }}>Save your new API key!</h3>
-            <p style={{ color: 'var(--text-muted)', marginBottom: '16px' }}>
+        <Card className="border-primary bg-primary/5">
+          <CardContent className="pt-6">
+            <h3 className="text-lg font-medium text-primary mb-2">Save your new API key!</h3>
+            <p className="text-sm text-muted-foreground mb-4">
               For your security, this is the only time we will show you the full API key secret. Please copy it now.
             </p>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <input type="text" className="form-input text-mono" value={newKey} readOnly />
-              <button 
-                className="btn btn-secondary" 
+            <div className="flex gap-3 mb-4">
+              <Input type="text" className="font-mono bg-background" value={newKey} readOnly />
+              <Button 
+                variant="secondary"
                 onClick={() => {
                   navigator.clipboard.writeText(newKey);
                   alert('Copied to clipboard!');
                 }}
               >
                 Copy
-              </button>
+              </Button>
             </div>
-            <button 
-              className="btn" 
-              style={{ marginTop: '16px', color: 'var(--text-muted)' }}
+            <Button 
+              variant="ghost" 
+              className="text-muted-foreground"
               onClick={() => setNewKey(null)}
             >
               I have saved it securely
-            </button>
-          </div>
-        </div>
+            </Button>
+          </CardContent>
+        </Card>
       )}
 
-      <div className="card">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Key ID</th>
-              <th>Created</th>
-              <th>Status</th>
-              <th style={{textAlign: 'right'}}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
+      <Card>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Key ID</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {loading ? (
-              <tr>
-                <td colSpan="4" className="loading-pulse" style={{textAlign: 'center'}}>Loading keys...</td>
-              </tr>
+              <TableRow>
+                <TableCell colSpan={4} className="text-center h-24 text-muted-foreground animate-pulse">Loading keys...</TableCell>
+              </TableRow>
             ) : keys.length === 0 ? (
-              <tr>
-                <td colSpan="4" style={{textAlign: 'center', color: 'var(--text-muted)'}}>No API keys generated yet.</td>
-              </tr>
+              <TableRow>
+                <TableCell colSpan={4} className="text-center h-24 text-muted-foreground">No API keys generated yet.</TableCell>
+              </TableRow>
             ) : (
               keys.map((k) => (
-                <tr key={k.key_id}>
-                  <td className="text-mono">{k.key_id}</td>
-                  <td>{new Date(k.created_at * 1000).toLocaleString()}</td>
-                  <td>
+                <TableRow key={k.key_id}>
+                  <TableCell className="font-mono">{k.key_id}</TableCell>
+                  <TableCell>{new Date(k.created_at * 1000).toLocaleString()}</TableCell>
+                  <TableCell>
                     {k.is_active ? (
-                      <span className="badge badge-active">Active</span>
+                      <Badge variant="success">Active</Badge>
                     ) : (
-                      <span className="badge badge-inactive">Revoked</span>
+                      <Badge variant="secondary">Revoked</Badge>
                     )}
-                  </td>
-                  <td style={{textAlign: 'right'}}>
+                  </TableCell>
+                  <TableCell className="text-right">
                     {k.is_active && (
-                      <button 
-                        className="btn btn-danger" 
+                      <Button 
+                        variant="destructive"
+                        size="sm"
                         onClick={() => handleRevoke(k.key_id)}
                       >
                         Revoke
-                      </button>
+                      </Button>
                     )}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))
             )}
-          </tbody>
-        </table>
-      </div>
+          </TableBody>
+        </Table>
+      </Card>
     </div>
   );
 }

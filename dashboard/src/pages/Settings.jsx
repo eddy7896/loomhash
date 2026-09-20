@@ -1,4 +1,7 @@
 import { useState, useEffect } from 'react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 export default function Settings() {
   const [settings, setSettings] = useState({});
@@ -30,7 +33,6 @@ export default function Settings() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ value: settings[key] })
       });
-      // Could show a toast notification here
     } catch (err) {
       console.error(err);
     } finally {
@@ -38,60 +40,60 @@ export default function Settings() {
     }
   };
 
-  if (loading) return <div className="loading-pulse">Loading settings...</div>;
+  if (loading) return <div className="animate-pulse space-y-4"><div className="h-8 w-48 bg-muted rounded"></div><div className="h-64 w-full bg-muted rounded"></div></div>;
 
   return (
-    <div className="settings-page">
-      <h1>Project Settings</h1>
-      <p className="subtitle">Configure your LoomHash environment.</p>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Project Settings</h1>
+        <p className="text-muted-foreground mt-2">Configure your LoomHash environment.</p>
+      </div>
 
-      <div className="card">
-        <div className="card-header">
-          <h3>General Settings</h3>
-          <p>Basic project configuration.</p>
-        </div>
-        <div className="card-body">
-          <div className="form-group" style={{maxWidth: '400px'}}>
-            <label className="form-label">Project Name</label>
-            <input 
+      <Card>
+        <CardHeader>
+          <CardTitle>General Settings</CardTitle>
+          <CardDescription>Basic project configuration.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2 max-w-sm">
+            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Project Name</label>
+            <Input 
               type="text" 
               name="project_name" 
-              className="form-input" 
               value={settings.project_name || ''} 
               onChange={handleChange}
             />
           </div>
-        </div>
-        <div className="card-footer">
-          <button 
-            className="btn btn-primary" 
+        </CardContent>
+        <CardFooter className="border-t bg-muted/40 px-6 py-4">
+          <Button 
             onClick={() => handleSave('project_name')}
             disabled={saving}
           >
             {saving ? 'Saving...' : 'Save Changes'}
-          </button>
-        </div>
-      </div>
+          </Button>
+        </CardFooter>
+      </Card>
       
-      <div className="card" style={{ borderColor: 'var(--border-dim)' }}>
-        <div className="card-header">
-          <h3 style={{ color: 'var(--accent-red)' }}>Danger Zone</h3>
-          <p>Irreversible and destructive actions.</p>
-        </div>
-        <div className="card-body">
-          <div className="flex-between">
-            <div>
-              <h4 style={{marginBottom: '4px', fontWeight: 500}}>Delete Project</h4>
-              <p style={{color: 'var(--text-muted)', fontSize: '0.9rem'}}>
+      <Card className="border-destructive/50">
+        <CardHeader>
+          <CardTitle className="text-destructive">Danger Zone</CardTitle>
+          <CardDescription>Irreversible and destructive actions.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <h4 className="text-sm font-medium leading-none">Delete Project</h4>
+              <p className="text-sm text-muted-foreground">
                 Permanently delete this project, all API keys, and all enrolled users.
               </p>
             </div>
-            <button className="btn btn-danger" onClick={() => alert('Cannot delete project in prototype mode.')}>
+            <Button variant="destructive" onClick={() => alert('Cannot delete project in prototype mode.')}>
               Delete Project
-            </button>
+            </Button>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

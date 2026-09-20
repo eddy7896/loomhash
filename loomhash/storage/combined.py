@@ -35,6 +35,15 @@ class PostgresRedisStorageBackend(StorageBackend):
         return record
 
     def delete(self, user_id: str) -> bool:
-        postgres_ok = self._postgres.delete(user_id)
+        # REV-01: both must report success (or idempotent success).
+        # We delete from cache first, then Postgres. If Postgres fails,
+        # cache is gone (safe degradation to miss). If Postgres succeeds
+        # but cache fails, we have a stale cache (dangerous).
+        # Returning False on partial failure ensures the caller knows the
+        # crypto-shredding guarantee hasn't been met.
         cache_ok = self._cache.delete(user_id)
-        return postgres_ok and cache_ok
+        postgres_ok = self._postgres.delete(user_id)
+        return cache_ok and postgres_ok
+
+    def list_users(self) -> list[str]:
+        return self._postgres.list_users()

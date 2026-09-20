@@ -11,9 +11,15 @@ const API_BASE = "http://127.0.0.1:8000";
 const videoEl = document.getElementById("video");
 const statusEl = document.getElementById("status");
 const userIdEl = document.getElementById("user-id");
+const apiKeyEl = document.getElementById("api-key");
 const cameraSelect = document.getElementById("camera-select");
 const canvasEl = document.createElement("canvas");
 const ctx = canvasEl.getContext("2d");
+
+function getAuthHeaders() {
+  const key = apiKeyEl.value.trim();
+  return key ? { "X-API-Key": key } : {};
+}
 
 const ENROLLMENT_FRAME_COUNT = 12;
 
@@ -134,9 +140,11 @@ document.getElementById("enroll-btn").addEventListener("click", async () => {
   try {
     const resp = await fetch(`${API_BASE}/v1/enroll`, {
       method: "POST",
+      headers: getAuthHeaders(),
       body: formData,
     });
     const data = await resp.json().catch(() => ({}));
+    if (resp.status === 401) log(`⚠ 401: Invalid or missing API key`);
     log(`POST /v1/enroll -> ${resp.status} ${JSON.stringify(data)}`);
   } catch (err) {
     log(`Fetch failed: ${err.message}`);
@@ -158,9 +166,12 @@ document.getElementById("auth-btn").addEventListener("click", async () => {
   try {
     const resp = await fetch(`${API_BASE}/v1/authenticate`, {
       method: "POST",
+      headers: getAuthHeaders(),
       body: formData,
     });
     const data = await resp.json().catch(() => ({}));
+    if (resp.status === 401) log(`⚠ 401: Invalid or missing API key`);
+    if (resp.status === 429) log(`⚠ 429: Rate limit exceeded — try again later`);
     log(`POST /v1/authenticate -> ${resp.status} ${JSON.stringify(data)}`);
   } catch (err) {
     log(`Fetch failed: ${err.message}`);
@@ -172,8 +183,12 @@ document.getElementById("revoke-btn").addEventListener("click", async () => {
   if (!userId) return log("Enter a user_id first.");
 
   try {
-    const resp = await fetch(`${API_BASE}/v1/users/${encodeURIComponent(userId)}`, { method: "DELETE" });
+    const resp = await fetch(`${API_BASE}/v1/users/${encodeURIComponent(userId)}`, {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    });
     const data = await resp.json().catch(() => ({}));
+    if (resp.status === 401) log(`⚠ 401: Invalid or missing API key`);
     log(`DELETE /v1/users/${userId} -> ${resp.status} ${JSON.stringify(data)}`);
   } catch (err) {
     log(`Fetch failed: ${err.message}`);

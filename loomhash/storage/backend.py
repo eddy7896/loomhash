@@ -40,3 +40,7 @@ class StorageBackend(abc.ABC):
     @abc.abstractmethod
     def delete(self, user_id: str) -> bool:
         """Remove user_id's record everywhere. True only if confirmed complete."""
+
+    @abc.abstractmethod
+    def list_users(self) -> list[str]:
+        """Return a list of all enrolled user_ids."""

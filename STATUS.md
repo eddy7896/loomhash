@@ -188,3 +188,19 @@ Review docs/open-decisions.md and resolve feature extraction, projection, and se
 - Wrote test suites for inference module and new multipart routes (59/59 passing)
 - Updated edge JS documentation to mark geometric feature extraction as superseded (D-13)
 - Updated documentation: open-decisions.md, agents/inference.md, agents/api-gateway.md, verification-checklist.md
+
+## 2026-09-20 — Local macOS dev environment configured (Python 3.11 + Node v20), full test suite verified
+
+- Initial state on local Mac: system was on Xcode Python 3.9.6 (violating Constraint 2 floor of >=3.10) with no project dependencies installed, and no Node.js available for edge/ JS tests.
+- Installed `uv` and provisioned managed standalone CPython 3.11.16 (`~/.local/share/uv/python/`).
+- Created local `.venv` and installed all project and test dependencies (`numpy`, `psycopg[binary]`, `redis`, `fastapi`, `uvicorn`, `python-multipart`, `onnxruntime`, `Pillow`, `httpx`).
+- Installed Node.js v20.18.0 standalone in `~/.local/` and linked `python3`, `python3.11`, `node`, `npm`, `npx` into `~/.local/bin` (sourced in `~/.zshrc`).
+- Configured git pre-commit hook execution: marked `hooks/pre-commit` executable and configured `git config core.hooksPath hooks`.
+- Added `*.egg-info/` to `.gitignore`.
+- Verification:
+  - `python scripts/check_constraints.py`: 0 hard violations under Python 3.11.
+  - `python scripts/check_docs.py`: memory files present and internally consistent.
+  - `.venv/bin/python -m unittest discover -s tests -t . -v`: 56/56 Python tests pass.
+  - `node --test edge/`: 15/15 JavaScript tests pass.
+  - `.venv/bin/python training/test_feature_targets.py`: 4/4 cross-validation tests pass.
+

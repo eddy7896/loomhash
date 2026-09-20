@@ -1,7 +1,8 @@
 from .backend import EnrollmentRecord, StorageBackend
 from .memory import InMemoryStorageBackend
+from .admin import AdminStore, InMemoryAdminStore
 
-__all__ = ["EnrollmentRecord", "StorageBackend", "InMemoryStorageBackend"]
+__all__ = ["EnrollmentRecord", "StorageBackend", "InMemoryStorageBackend", "AdminStore", "InMemoryAdminStore"]
 
 # PostgresStorageBackend, RedisEnrollmentCache, and PostgresRedisStorageBackend
 # are intentionally not imported here: keeping them out of this package's

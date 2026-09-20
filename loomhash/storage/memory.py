@@ -24,3 +24,6 @@ class InMemoryStorageBackend(StorageBackend):
     def delete(self, user_id: str) -> bool:
         self._records.pop(user_id, None)
         return user_id not in self._records
+
+    def list_users(self) -> list[str]:
+        return list(self._records.keys())

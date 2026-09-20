@@ -71,3 +71,8 @@ class PostgresStorageBackend(StorageBackend):
         with self._connect() as conn:
             conn.execute(DELETE_SQL, (user_id,))
         return self.get(user_id) is None
+
+    def list_users(self) -> list[str]:
+        with self._connect() as conn:
+            rows = conn.execute("SELECT user_id FROM enrollments ORDER BY created_at DESC;").fetchall()
+        return [row[0] for row in rows]
